@@ -9,10 +9,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,34 +39,98 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WaterTrackerApp() {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            text = "HydroTracker",
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color(0xFF1565C0),
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Text(
-            text = "Target Harian: 2000 ml",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    var totalIntake by remember { mutableStateOf(0) }
+    val targetIntake = 2000
 
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            items(WaterDataSource.dummyWater) { water ->
-                WaterCard(water = water)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
+            Text(
+                text = "HydroTracker",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color(0xFF1565C0),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            Text(
+                text = "Target Harian: $targetIntake ml",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
+        items(WaterDataSource.dummyWater) { water ->
+            WaterCard(water = water, onAdd = { amount ->
+                totalIntake += amount
+            })
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Daily Progress",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1565C0)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    val progress = (totalIntake.toFloat() / targetIntake.toFloat()).coerceAtMost(1f)
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(12.dp),
+                        color = Color(0xFF2196F3),
+                        trackColor = Color(0xFFBBDEFB),
+                        strokeCap = StrokeCap.Round
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "$totalIntake / $targetIntake ml",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                        
+                        Button(
+                            onClick = { totalIntake = 0 },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Reset", color = Color.White)
+                        }
+                    }
+                }
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-fun WaterCard(water: WaterIntake) {
+fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
     Card(
         modifier = Modifier
-            .padding(vertical = 6.dp, horizontal = 8.dp)
+            .padding(vertical = 6.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -96,6 +161,15 @@ fun WaterCard(water: WaterIntake) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
+            }
+            
+            Button(
+                onClick = { onAdd(water.amountMl) },
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+            ) {
+                Text("Add", color = Color.White)
             }
         }
     }
