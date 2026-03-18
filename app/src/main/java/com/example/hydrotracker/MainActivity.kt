@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,8 +72,7 @@ fun WaterTrackerApp() {
         item {
             Spacer(modifier = Modifier.height(16.dp))
             Card(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -86,7 +88,7 @@ fun WaterTrackerApp() {
                         color = Color(0xFF1565C0)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    
+
                     val progress = (totalIntake.toFloat() / targetIntake.toFloat()).coerceAtMost(1f)
                     LinearProgressIndicator(
                         progress = { progress },
@@ -97,9 +99,9 @@ fun WaterTrackerApp() {
                         trackColor = Color(0xFFBBDEFB),
                         strokeCap = StrokeCap.Round
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,7 +112,7 @@ fun WaterTrackerApp() {
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
-                        
+
                         Button(
                             onClick = { totalIntake = 0 },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350)),
@@ -128,6 +130,8 @@ fun WaterTrackerApp() {
 
 @Composable
 fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
+    var isFavorite by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier
             .padding(vertical = 6.dp)
@@ -136,40 +140,54 @@ fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = water.imageRes),
-                contentDescription = water.title,
-                modifier = Modifier
-                    .size(50.dp),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = water.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF333333)
-                )
-                Text(
-                    text = water.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-            }
-            
-            Button(
-                onClick = { onAdd(water.amountMl) },
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+        Box {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Add", color = Color.White)
+                Image(
+                    painter = painterResource(id = water.imageRes),
+                    contentDescription = water.title,
+                    modifier = Modifier.size(50.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = water.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF333333)
+                    )
+                    Text(
+                        text = water.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+
+                Button(
+                    onClick = { onAdd(water.amountMl) },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text("Add", color = Color.White)
+                }
+            }
+
+            IconButton(
+                onClick = { isFavorite = !isFavorite },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = "Tandai Favorit",
+                    tint = if (isFavorite) Color.Red else Color(0xFFBDBDBD)
+                )
             }
         }
     }
