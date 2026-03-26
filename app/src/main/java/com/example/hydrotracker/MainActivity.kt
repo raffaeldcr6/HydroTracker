@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,24 +43,53 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WaterTrackerApp() {
-    var totalIntake by remember { mutableStateOf(0) }
+    var totalIntake by remember { mutableIntStateOf(0) }
     val targetIntake = 2000
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
+            Column {
+                Text(
+                    text = "HydroTracker",
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFF1565C0)
+                )
+                Text(
+                    text = "Target Harian: $targetIntake ml",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+        }
+
+        item {
+            Column {
+                Text(
+                    text = "Rekomendasi Pilihan",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(WaterDataSource.dummyWater) { water ->
+                        RecommendedWaterItem(water = water)
+                    }
+                }
+            }
+        }
+
+        item {
             Text(
-                text = "HydroTracker",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color(0xFF1565C0),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = "Target Harian: $targetIntake ml",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
+                text = "Daftar Menu Air",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
             )
         }
 
@@ -70,19 +100,18 @@ fun WaterTrackerApp() {
         }
 
         item {
-            Spacer(modifier = Modifier.height(16.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Daily Progress",
+                        text = "Progress Harian",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1565C0)
@@ -100,7 +129,7 @@ fun WaterTrackerApp() {
                         strokeCap = StrokeCap.Round
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -123,7 +152,35 @@ fun WaterTrackerApp() {
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun RecommendedWaterItem(water: WaterIntake) {
+    Card(
+        modifier = Modifier.width(140.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column {
+            Image(
+                painter = painterResource(id = water.imageRes),
+                contentDescription = water.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .padding(8.dp),
+                contentScale = ContentScale.Fit
+            )
+            Text(
+                text = water.title,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
         }
     }
 }
@@ -133,47 +190,46 @@ fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
     var isFavorite by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .padding(vertical = 6.dp)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Box {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column {
                 Image(
                     painter = painterResource(id = water.imageRes),
                     contentDescription = water.title,
-                    modifier = Modifier.size(50.dp),
-                    contentScale = ContentScale.Fit
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.width(16.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = water.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF333333)
-                    )
-                    Text(
-                        text = water.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                }
-
-                Button(
-                    onClick = { onAdd(water.amountMl) },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Add", color = Color.White)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = water.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = water.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+
+                    Button(
+                        onClick = { onAdd(water.amountMl) },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                    ) {
+                        Text("Tambah", color = Color.White)
+                    }
                 }
             }
 
@@ -181,12 +237,12 @@ fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
                 onClick = { isFavorite = !isFavorite },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(4.dp)
+                    .padding(8.dp)
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Tandai Favorit",
-                    tint = if (isFavorite) Color.Red else Color(0xFFBDBDBD)
+                    contentDescription = "Favorit",
+                    tint = if (isFavorite) Color.Red else Color.White
                 )
             }
         }
