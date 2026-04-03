@@ -20,19 +20,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.hydrotracker.model.WaterDataSource
 import com.example.hydrotracker.model.WaterIntake
+import com.example.hydrotracker.ui.theme.HydroTrackerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            HydroTrackerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFFE3F2FD)
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     WaterTrackerApp()
                 }
@@ -55,8 +55,8 @@ fun WaterTrackerApp() {
             Column {
                 Text(
                     text = "HydroTracker",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF1565C0)
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Target Harian: $targetIntake ml",
@@ -71,7 +71,6 @@ fun WaterTrackerApp() {
                 Text(
                     text = "Rekomendasi Pilihan",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 LazyRow(
@@ -88,8 +87,7 @@ fun WaterTrackerApp() {
         item {
             Text(
                 text = "Daftar Menu Air",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge
             )
         }
 
@@ -103,7 +101,7 @@ fun WaterTrackerApp() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
                 Column(
@@ -113,8 +111,7 @@ fun WaterTrackerApp() {
                     Text(
                         text = "Progress Harian",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1565C0)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -124,8 +121,8 @@ fun WaterTrackerApp() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(12.dp),
-                        color = Color(0xFF2196F3),
-                        trackColor = Color(0xFFBBDEFB),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.secondary,
                         strokeCap = StrokeCap.Round
                     )
 
@@ -138,16 +135,15 @@ fun WaterTrackerApp() {
                     ) {
                         Text(
                             text = "$totalIntake / $targetIntake ml",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.bodyLarge
                         )
 
                         Button(
                             onClick = { totalIntake = 0 },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350)),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Reset", color = Color.White)
+                            Text("Reset", color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
                 }
@@ -162,7 +158,7 @@ fun RecommendedWaterItem(water: WaterIntake) {
         modifier = Modifier.width(140.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
             Image(
@@ -178,7 +174,6 @@ fun RecommendedWaterItem(water: WaterIntake) {
                 text = water.title,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
                 maxLines = 1
             )
         }
@@ -193,7 +188,7 @@ fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box {
             Column {
@@ -213,8 +208,7 @@ fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = water.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleMedium
                         )
                         Text(
                             text = water.description,
@@ -226,9 +220,9 @@ fun WaterCard(water: WaterIntake, onAdd: (Int) -> Unit) {
                     Button(
                         onClick = { onAdd(water.amountMl) },
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Tambah", color = Color.White)
+                        Text("Tambah", color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
