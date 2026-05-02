@@ -3,7 +3,6 @@ package com.example.hydrotracker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,18 +16,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.hydrotracker.model.WaterDataSource
+import coil.compose.AsyncImage
 import com.example.hydrotracker.model.WaterIntake
+import com.example.hydrotracker.network.RetrofitClient
 import com.example.hydrotracker.ui.theme.HydroTrackerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,17 +64,20 @@ fun AppNavigation(
     totalIntake: Int,
     onIntakeChanged: (Int) -> Unit
 ) {
+    var waters by remember { mutableStateOf<List<WaterIntake>>(emptyList()) }
+
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             WaterTrackerApp(
                 navController = navController,
                 totalIntake = totalIntake,
-                onReset = { onIntakeChanged(0) }
+                onReset = { onIntakeChanged(0) },
+                onWatersLoaded = { waters = it }
             )
         }
         composable("detail/{title}") { backStackEntry ->
             val title = backStackEntry.arguments?.getString("title")
-            val water = WaterDataSource.dummyWater.find { it.title == title }
+            val water = waters.find { it.title == title }
             if (water != null) {
                 DetailScreen(
                     food = water,
@@ -86,8 +91,60 @@ fun AppNavigation(
 }
 
 @Composable
-fun WaterTrackerApp(navController: NavHostController, totalIntake: Int, onReset: () -> Unit) {
+fun WaterTrackerApp(
+    navController: NavHostController,
+    totalIntake: Int,
+    onReset: () -> Unit,
+    onWatersLoaded: (List<WaterIntake>) -> Unit
+) {
+    var waters by remember { mutableStateOf<List<WaterIntake>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
     val targetIntake = 2000
+
+    LaunchedEffect(Unit) {
+        try {
+            waters = RetrofitClient.instance.getWaterIntakes()
+            onWatersLoaded(waters)
+            isError = false
+        } catch (e: Exception) {
+            isError = true
+        } finally {
+            isLoading = false
+        }
+    }
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    if (isError || waters.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Gagal Memuat Data",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Pastikan koneksi internet Anda menyala",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+        return
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -120,7 +177,7 @@ fun WaterTrackerApp(navController: NavHostController, totalIntake: Int, onReset:
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    items(WaterDataSource.dummyWater) { water ->
+                    items(waters) { water ->
                         RecommendedWaterItem(food = water, navController = navController)
                     }
                 }
@@ -128,13 +185,10 @@ fun WaterTrackerApp(navController: NavHostController, totalIntake: Int, onReset:
         }
 
         item {
-            Text(
-                text = "Daftar Menu Air",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Text(text = "Daftar Menu Air", style = MaterialTheme.typography.titleLarge)
         }
 
-        items(WaterDataSource.dummyWater) { water ->
+        items(waters) { water ->
             WaterCard(water = water, navController = navController)
         }
 
@@ -176,7 +230,6 @@ fun WaterTrackerApp(navController: NavHostController, totalIntake: Int, onReset:
                             text = "$totalIntake / $targetIntake ml",
                             style = MaterialTheme.typography.bodyLarge
                         )
-
                         Button(
                             onClick = onReset,
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
@@ -210,11 +263,21 @@ fun DetailScreen(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = food.imageRes),
-                contentDescription = null,
-                modifier = Modifier.size(200.dp).padding(20.dp)
-            )
+            Box {
+                AsyncImage(
+                    model = food.imageUrl,
+                    contentDescription = food.title,
+                    placeholder = painterResource(id = R.drawable.air_0),
+                    error = painterResource(id = R.drawable.air_0),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
             Text(text = food.title, style = MaterialTheme.typography.headlineLarge)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Kapasitas: ${food.amountMl} ml", fontSize = 18.sp)
@@ -248,11 +311,8 @@ fun DetailScreen(
 
             Button(
                 onClick = {
-                    if (isFullScreen) {
-                        navController.popBackStack()
-                    } else {
-                        navController.navigate("detail/${food.title}")
-                    }
+                    if (isFullScreen) navController.popBackStack()
+                    else navController.navigate("detail/${food.title}")
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -278,9 +338,11 @@ fun RecommendedWaterItem(food: WaterIntake, navController: NavHostController) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
-            Image(
-                painter = painterResource(id = food.imageRes),
+            AsyncImage(
+                model = food.imageUrl,
                 contentDescription = food.title,
+                placeholder = painterResource(id = R.drawable.air_0),
+                error = painterResource(id = R.drawable.air_0),
                 modifier = Modifier.fillMaxWidth().height(90.dp).padding(8.dp),
                 contentScale = ContentScale.Fit
             )
@@ -306,13 +368,14 @@ fun WaterCard(water: WaterIntake, navController: NavHostController) {
     ) {
         Box {
             Column {
-                Image(
-                    painter = painterResource(id = water.imageRes),
+                AsyncImage(
+                    model = water.imageUrl,
                     contentDescription = water.title,
+                    placeholder = painterResource(id = R.drawable.air_0),
+                    error = painterResource(id = R.drawable.air_0),
                     modifier = Modifier.fillMaxWidth().height(150.dp),
                     contentScale = ContentScale.Crop
                 )
-
                 Row(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
