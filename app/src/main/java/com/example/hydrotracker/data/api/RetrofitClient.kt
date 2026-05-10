@@ -1,4 +1,4 @@
-package com.example.hydrotracker.network
+package com.example.hydrotracker.data.api
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

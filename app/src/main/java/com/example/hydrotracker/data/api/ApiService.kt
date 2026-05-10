@@ -1,6 +1,6 @@
-package com.example.hydrotracker.network
+package com.example.hydrotracker.data.api
 
-import com.example.hydrotracker.model.WaterIntake
+import com.example.hydrotracker.data.model.WaterIntake
 import retrofit2.http.GET
 
 interface ApiService {
